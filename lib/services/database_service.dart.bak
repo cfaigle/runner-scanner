@@ -20,6 +20,28 @@ class DatabaseService {
   final Uuid _uuid = const Uuid();
 
   Future<void> init() async {
+    await Hive.initFlutter();
+
+    // Register adapters
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(RunnerAdapter());
+    }
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(ScanAdapter());
+    }
+    if (!Hive.isAdapterRegistered(2)) {
+      Hive.registerAdapter(SyncOperationAdapter());
+    }
+    if (!Hive.isAdapterRegistered(3)) {
+      Hive.registerAdapter(SyncItemAdapter());
+    }
+    if (!Hive.isAdapterRegistered(4)) {
+      Hive.registerAdapter(LocalRaceAdapter());
+    }
+    if (!Hive.isAdapterRegistered(5)) {
+      Hive.registerAdapter(LocalEntryAdapter());
+    }
+
     // Open boxes
     _runnersBox = await Hive.openBox<Runner>(_runnersBoxName);
     _scansBox = await Hive.openBox<Scan>(_scansBoxName);

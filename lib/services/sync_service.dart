@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+import '../models/local_race.dart';
 
 class SyncService {
   final DatabaseService _databaseService;
@@ -104,18 +105,17 @@ class SyncService {
       // Download all races
       final races = await _apiClient.getRaces();
       for (final race in races) {
-        await _databaseService.saveLocalRace({
-          'id': race.id,
-          'name': race.name,
-          'description': race.description,
-          'race_date': race.raceDate.toIso8601String(),
-          'race_time': race.raceTime,
-          'status': race.status,
-          'start_time': race.startTime?.toIso8601String(),
-          'entry_count': race.entryCount,
-          'scan_count': race.scanCount,
-          'synced_at': DateTime.now().toUtc().toIso8601String(),
-        });
+        final localRace = LocalRace(
+          id: race.id,
+          name: race.name,
+          description: race.description,
+          raceDate: race.raceDate,
+          status: race.status,
+          startTime: race.startTime,
+          entryCount: race.entryCount,
+          scanCount: race.scanCount,
+        );
+        await _databaseService.saveLocalRace(localRace);
         downloaded++;
       }
 

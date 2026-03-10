@@ -10,10 +10,15 @@ class ApiClient {
   String? _authToken;
   WebSocketChannel? _webSocket;
   Timer? _syncTimer;
-  
+
   final Function(ScanAnnouncement)? onScanAnnouncement;
-  
-  ApiClient({required this.baseUrl, this.onScanAnnouncement});
+
+  ApiClient({required this.baseUrl, this.onScanAnnouncement}) {
+    // Remove trailing slash from baseUrl to prevent double slashes
+    if (baseUrl.endsWith('/')) {
+      baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+    }
+  }
   
   void setAuthToken(String token) {
     _authToken = token;
