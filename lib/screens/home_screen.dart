@@ -54,9 +54,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           SliverToBoxAdapter(
             child: Consumer<AppState>(
               builder: (context, appState, child) {
+                debugPrint('🏠 HOME SCREEN BUILD: localRaces.count=${appState.localRaces.length}, isConnected=${appState.isConnectedToServer}');
+                for (var race in appState.localRaces) {
+                  debugPrint('   - Race: ${race.id} - ${race.name} (${race.status})');
+                }
+                
                 if (appState.localRaces.isEmpty) {
+                  debugPrint('🏠 HOME: Showing empty state');
                   return _buildEmptyState();
                 }
+                debugPrint('🏠 HOME: Showing race list');
                 return _buildRaceList(appState);
               },
             ),

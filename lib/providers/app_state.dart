@@ -279,26 +279,35 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> login(String username, String password) async {
+    debugPrint('🔐 LOGIN: Starting login for user: $username');
+    
     if (_apiClient == null) {
+      debugPrint('❌ LOGIN: Not connected to server');
       throw Exception('Not connected to server');
     }
 
     final data = await _apiClient!.login(username, password);
+    debugPrint('✅ LOGIN: Success! Token received, user ID: ${data['user']['id']}');
+    
     _authToken = data['access_token'];
     _currentUserId = data['user']['id'];
 
-    // Now load races after login
-    await loadServerRaces();
-    
+    // Trigger immediate sync to download races to local storage
+    if (_syncService != null) {
+      debugPrint('🔄 LOGIN: Starting immediate sync...');
+      _lastSyncResult = await _syncService!.sync();
+      debugPrint('🔄 LOGIN: Sync complete - Downloaded: ${_lastSyncResult?.downloaded} races');
+      
+      // Reload local races from Hive after sync
+      debugPrint('🔄 LOGIN: Reloading local races from Hive...');
+      await _loadLocalRaces();
+      debugPrint('🔄 LOGIN: Local races reloaded - count: ${_localRaces.length}');
+    }
+
     // Haptic feedback
     HapticFeedback.lightImpact();
-    
-    notifyListeners();
-  }
 
-  Future<void> loadServerRaces() async {
-    if (_apiClient == null) return;
-    _serverRaces = await _apiClient!.getRaces();
+    debugPrint('📢 LOGIN: Calling notifyListeners() - localRaces count: ${_localRaces.length}');
     notifyListeners();
   }
 

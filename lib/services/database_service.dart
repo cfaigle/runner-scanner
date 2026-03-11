@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
 
@@ -130,11 +131,15 @@ class DatabaseService {
 
   // Local race operations
   List<LocalRace> getLocalRaces() {
-    return _localRacesBox.values.cast<LocalRace>().toList();
+    final races = _localRacesBox.values.cast<LocalRace>().toList();
+    debugPrint('💾 DB: getLocalRaces() returned ${races.length} races');
+    return races;
   }
 
   Future<void> saveLocalRace(LocalRace race) async {
+    debugPrint('💾 DB: saveLocalRace(${race.name}) - id: ${race.id}');
     await _localRacesBox.put(race.id, race);
+    debugPrint('💾 DB: ✅ Saved race to Hive');
   }
 
   LocalRace? getLocalRace(String id) {

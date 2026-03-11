@@ -103,8 +103,12 @@ class SyncService {
 
     try {
       // Download all races
+      debugPrint('📥 SYNC: Downloading races from server...');
       final races = await _apiClient.getRaces();
+      debugPrint('📥 SYNC: Received ${races.length} races from server');
+      
       for (final race in races) {
+        debugPrint('   - Race: ${race.id} - ${race.name} (${race.status})');
         final localRace = LocalRace(
           id: race.id,
           name: race.name,
@@ -116,11 +120,13 @@ class SyncService {
           scanCount: race.scanCount,
         );
         await _databaseService.saveLocalRace(localRace);
+        debugPrint('   ✅ SYNC: Saved race to local: ${race.name}');
         downloaded++;
       }
 
-      debugPrint('📥 Downloaded $downloaded races from server');
+      debugPrint('📥 SYNC: Downloaded $downloaded races from server');
     } catch (e) {
+      debugPrint('❌ SYNC: Failed to download races: $e');
       errors.add('Failed to download races: $e');
     }
 
