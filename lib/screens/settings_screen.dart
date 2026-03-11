@@ -72,6 +72,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             backgroundColor: Colors.green,
           ),
         );
+        
+        // Return to races screen after successful login
+        Navigator.pop(context);
       }
     } catch (e) {
       setState(() => _isLoading = false);

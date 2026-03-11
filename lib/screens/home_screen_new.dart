@@ -7,6 +7,7 @@ import '../presentation/bloc/race/race_state.dart';
 import '../core/theme/app_theme.dart';
 import 'settings_screen.dart';
 import 'create_race_screen_new.dart';
+import 'race_detail_screen_new.dart';
 
 class HomeScreenNew extends StatelessWidget {
   const HomeScreenNew({super.key});
@@ -112,22 +113,74 @@ class HomeScreenNew extends StatelessWidget {
         final race = races[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            title: Text(race.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                Text(DateFormat('MMM d, yyyy').format(race.raceDate)),
-                const SizedBox(height: 4),
-                _buildStatusChip(race.status),
-              ],
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios),
+          child: InkWell(
             onTap: () {
               // Navigate to race detail
+              context.read<RaceBloc>().add(SelectRace(race.id));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RaceDetailScreenNew(race: race),
+                ),
+              );
             },
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          race.name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      _buildStatusChip(race.status),
+                    ],
+                  ),
+                  if (race.description != null && race.description!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      race.description!,
+                      style: const TextStyle(color: Colors.grey),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('MMM d, yyyy').format(race.raceDate),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.people, size: 14, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${race.entryCount}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(width: 16),
+                      Icon(Icons.qr_code, size: 14, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${race.scanCount}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
