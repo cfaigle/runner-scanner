@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../presentation/bloc/race/race_bloc.dart';
 import '../presentation/bloc/race/race_event.dart';
+import '../presentation/bloc/scan/scan_bloc.dart';
 import '../core/theme/app_theme.dart';
 import 'scanner_screen_new.dart';
 import 'participants_screen_new.dart';
@@ -241,11 +242,14 @@ class _RaceDetailScreenNewState extends State<RaceDetailScreenNew> {
       case 0:
         return ParticipantsScreenNew(race: race);
       case 1:
-        return ScannerScreenNew(race: race);
+        return BlocProvider.value(
+          value: context.read<ScanBloc>(),
+          child: ScannerScreenNew(race: race),
+        );
       case 2:
         return ResultsScreenNew(race: race);
       default:
-        return ScannerScreenNew(race: race);
+        return ParticipantsScreenNew(race: race);
     }
   }
 

@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../widgets/confetti.dart';
+import '../presentation/bloc/scan/scan_bloc.dart';
+import '../presentation/bloc/scan/scan_event.dart';
+import '../presentation/bloc/scan/scan_state.dart';
 
 class ScannerScreenNew extends StatefulWidget {
   final dynamic race;
@@ -13,12 +16,12 @@ class ScannerScreenNew extends StatefulWidget {
   State<ScannerScreenNew> createState() => _ScannerScreenNewState();
 }
 
-class _ScannerScreenNewState extends State<ScannerScreenNew> {
+class _ScannerScreenNewState extends State<ScannerScreenNew> with TickerProviderStateMixin {
   MobileScannerController? _controller;
-  String? _lastScanMessage;
-  Timer? _messageTimer;
   bool _isProcessing = false;
   bool _hasCameraError = false;
+  late AnimationController _scanAnimationController;
+  late Animation<double> _scanAnimation;
 
   @override
   void initState() {
@@ -26,6 +29,14 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
     _controller = MobileScannerController(
       facing: CameraFacing.back,
       torchEnabled: true,
+    );
+    
+    _scanAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _scanAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _scanAnimationController, curve: Curves.easeOut),
     );
   }
 
@@ -41,7 +52,7 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
   @override
   void dispose() {
     _controller?.dispose();
-    _messageTimer?.cancel();
+    _scanAnimationController.dispose();
     super.dispose();
   }
 
@@ -51,10 +62,33 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
       return _buildRaceNotActiveView();
     }
 
-    return Stack(
-      children: [
-        _buildScannerView(),
-      ],
+    return BlocBuilder<ScanBloc, ScanState>(
+      builder: (context, state) {
+        return Stack(
+          children: [
+            _buildScannerView(),
+            // Success message with animation
+            if (state is ScanSuccess)
+              Positioned(
+                top: 16,
+                left: 16,
+                right: 16,
+                child: ScaleTransition(
+                  scale: _scanAnimation,
+                  child: _buildScanOverlay(state.message),
+                ),
+              ),
+            // Cooldown message
+            if (state is ScanCooldown)
+              Positioned(
+                top: 16,
+                left: 16,
+                right: 16,
+                child: _buildCooldownOverlay(state.secondsRemaining),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -162,14 +196,6 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
                 ),
               ),
             ),
-            // Success message
-            if (_lastScanMessage != null)
-              Positioned(
-                top: 16,
-                left: 16,
-                right: 16,
-                child: _buildScanOverlay(),
-              ),
             // Flash button
             Positioned(
               top: 16,
@@ -226,7 +252,7 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
     );
   }
 
-  Widget _buildScanOverlay() {
+  Widget _buildScanOverlay(String message) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -257,7 +283,7 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              _lastScanMessage!,
+              message,
               style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
@@ -270,32 +296,68 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
     setState(() => _isProcessing = true);
 
     try {
-      // TODO: Parse QR and record scan
-      // For now, just show success
-      final runnerName = 'Runner ${qrData.substring(0, 8)}';
-      _showMessage('✅ $runnerName - Lap 1');
+      // Parse QR data - expecting runner GUID format
+      // Format: runner-guid or JSON with runner info
+      String runnerId;
+      String runnerName;
       
-      // Trigger confetti
-      if (mounted) {
-        showConfetti(context, particleCount: 80);
+      if (qrData.contains('{')) {
+        // JSON format - parse it
+        // For now, just use the raw data
+        runnerId = qrData;
+        runnerName = 'Runner ${qrData.substring(0, 8)}';
+      } else {
+        // Plain GUID format
+        runnerId = qrData;
+        runnerName = 'Runner ${qrData.substring(0, 8)}';
       }
 
-      // Haptic feedback
-      HapticFeedback.mediumImpact();
+      debugPrint('📱 SCANNER: Scanned $runnerName ($runnerId)');
+
+      // Record scan via BLoC
+      if (mounted) {
+        context.read<ScanBloc>().add(
+          RecordScan(
+            runnerId: runnerId,
+            runnerName: runnerName,
+            raceId: widget.race.id,
+          ),
+        );
+
+        // Trigger success animation
+        _scanAnimationController.forward(from: 0);
+      }
     } catch (e) {
-      _showMessage('Error: ${e.toString()}');
+      debugPrint('❌ SCANNER: Error processing scan - $e');
     } finally {
       setState(() => _isProcessing = false);
     }
   }
 
-  void _showMessage(String message) {
-    setState(() => _lastScanMessage = message);
-    _messageTimer?.cancel();
-    _messageTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() => _lastScanMessage = null);
-      }
-    });
+  Widget _buildCooldownOverlay(int seconds) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade700,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.shade700.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.timer, color: Colors.white, size: 28),
+          const SizedBox(width: 12),
+          Text(
+            'Wait ${seconds}s before scanning again',
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -6,6 +6,7 @@ import 'models/models.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/bloc/race/race_bloc.dart';
 import 'presentation/bloc/race/race_event.dart';
+import 'presentation/bloc/scan/scan_bloc.dart';
 import 'screens/home_screen_new.dart';
 
 void main() async {
@@ -46,6 +47,9 @@ void main() async {
               bloc.add(LoadRaces());
               return bloc;
             },
+          ),
+          BlocProvider(
+            create: (context) => ScanBloc(context.read<DatabaseService>()),
           ),
         ],
         child: const RunnerScanApp(),
