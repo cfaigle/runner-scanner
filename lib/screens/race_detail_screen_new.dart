@@ -18,7 +18,7 @@ class RaceDetailScreenNew extends StatefulWidget {
 }
 
 class _RaceDetailScreenNewState extends State<RaceDetailScreenNew> {
-  int _selectedIndex = 1; // Start with scanner tab
+  int _selectedIndex = 0; // Start with participants tab (0)
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class _RaceDetailScreenNewState extends State<RaceDetailScreenNew> {
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 200,
+              expandedHeight: 140, // Smaller height
               floating: true,
               pinned: true,
               backgroundColor: _getHeaderColor(race.status),
@@ -40,27 +40,13 @@ class _RaceDetailScreenNewState extends State<RaceDetailScreenNew> {
               actions: [
                 if (race.status == 'draft')
                   IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.play_arrow, size: 28),
-                    ),
+                    icon: const Icon(Icons.play_circle, color: Colors.white, size: 28),
                     onPressed: () => _startRace(race.id),
                     tooltip: 'Start Race',
                   ),
                 if (race.status == 'active')
                   IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.stop, size: 28),
-                    ),
+                    icon: const Icon(Icons.stop_circle, color: Colors.white, size: 28),
                     onPressed: () => _stopRace(race.id),
                     tooltip: 'Stop Race',
                   ),
@@ -112,45 +98,52 @@ class _RaceDetailScreenNewState extends State<RaceDetailScreenNew> {
           end: Alignment.bottomRight,
         ),
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(),
-              _buildStatusBadge(race.status),
-              const SizedBox(height: 12),
-              Text(
-                race.name,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 40, 16, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              race.name,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 16, color: Colors.white.withOpacity(0.9)),
-                  const SizedBox(width: 6),
-                  Text(
-                    DateFormat('EEEE, MMMM d, yyyy').format(race.raceDate),
-                    style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9)),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 12, color: Colors.white.withOpacity(0.8)),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    DateFormat('MMM d, yyyy').format(race.raceDate),
+                    style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  _buildStatChip(Icons.people, '${race.entryCount}', 'Runners'),
-                  const SizedBox(width: 16),
-                  _buildStatChip(Icons.qr_code, '${race.scanCount}', 'Scans'),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+                ),
+                const SizedBox(width: 16),
+                Icon(Icons.people, size: 12, color: Colors.white.withOpacity(0.8)),
+                const SizedBox(width: 4),
+                Text(
+                  '${race.entryCount}',
+                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
+                ),
+                const SizedBox(width: 12),
+                Icon(Icons.qr_code, size: 12, color: Colors.white.withOpacity(0.8)),
+                const SizedBox(width: 4),
+                Text(
+                  '${race.scanCount}',
+                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -54,26 +54,6 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
     return Stack(
       children: [
         _buildScannerView(),
-        // Sync status indicator
-        Positioned(
-          top: 8,
-          left: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_done, size: 14, color: Colors.white),
-                SizedBox(width: 4),
-                Text('Syncing', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -110,154 +90,139 @@ class _ScannerScreenNewState extends State<ScannerScreenNew> {
   }
 
   Widget _buildScannerView() {
-    return Stack(
-      children: [
-        MobileScanner(
-          controller: _controller,
-          onDetect: (capture) {
-            if (_isProcessing) return;
-
-            final barcodes = capture.barcodes;
-            for (final barcode in barcodes) {
-              if (barcode.rawValue != null) {
-                _handleScan(barcode.rawValue!);
-                break;
-              }
-            }
-          },
-          errorBuilder: (context, error, child) {
-            setState(() => _hasCameraError = true);
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.camera_alt, size: 80, color: Colors.red),
-                  const SizedBox(height: 16),
-                  const Text('Camera Error', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(error.errorCode?.name ?? 'Unknown error', style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: _retryCamera,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            MobileScanner(
+              controller: _controller,
+              fit: BoxFit.cover,
+              onDetect: (capture) {
+                if (_isProcessing) return;
+                final barcodes = capture.barcodes;
+                for (final barcode in barcodes) {
+                  if (barcode.rawValue != null) {
+                    _handleScan(barcode.rawValue!);
+                    break;
+                  }
+                }
+              },
+              errorBuilder: (context, error, child) {
+                setState(() => _hasCameraError = true);
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.camera_alt, size: 80, color: Colors.red),
+                      const SizedBox(height: 16),
+                      const Text('Camera Error', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text(error.errorCode?.name ?? 'Unknown error', style: const TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _retryCamera,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
-        ),
-        // Scan area guide
-        Positioned(
-          bottom: 100,
-          left: 0,
-          right: 0,
-          child: Column(
-            children: [
-              Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 0, left: 0,
-                      child: Container(
-                        width: 30, height: 30,
-                        decoration: BoxDecoration(
-                          border: Border(
-                            top: BorderSide(color: Colors.blue.shade400, width: 4),
-                            left: BorderSide(color: Colors.blue.shade400, width: 4),
-                          ),
-                          borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0, right: 0,
-                      child: Container(
-                        width: 30, height: 30,
-                        decoration: BoxDecoration(
-                          border: Border(
-                            top: BorderSide(color: Colors.blue.shade400, width: 4),
-                            right: BorderSide(color: Colors.blue.shade400, width: 4),
-                          ),
-                          borderRadius: const BorderRadius.only(topRight: Radius.circular(8)),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0, left: 0,
-                      child: Container(
-                        width: 30, height: 30,
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.blue.shade400, width: 4),
-                            left: BorderSide(color: Colors.blue.shade400, width: 4),
-                          ),
-                          borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(8)),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0, right: 0,
-                      child: Container(
-                        width: 30, height: 30,
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.blue.shade400, width: 4),
-                            right: BorderSide(color: Colors.blue.shade400, width: 4),
-                          ),
-                          borderRadius: const BorderRadius.only(bottomRight: Radius.circular(8)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Align QR code within frame',
-                style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        ),
-        // Success message
-        if (_lastScanMessage != null)
-          Positioned(
-            top: 80,
-            left: 24,
-            right: 24,
-            child: _buildScanOverlay(),
-          ),
-        // Flash button
-        Positioned(
-          top: 60,
-          right: 24,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: Builder(
-              builder: (context) {
-                final controller = _controller;
-                final isEnabled = controller != null && !_hasCameraError;
-                return IconButton(
-                  icon: const Icon(Icons.flash_on, color: Colors.white),
-                  onPressed: isEnabled ? () => controller.toggleTorch() : null,
-                  iconSize: 28,
                 );
               },
             ),
+            // Scan area guide - centered in available space
+            Positioned.fill(
+              child: SafeArea(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Stack(
+                          children: [
+                            _buildCorner(0, 0, true, true),
+                            _buildCorner(0, null, true, false),
+                            _buildCorner(null, 0, false, true),
+                            _buildCorner(null, null, false, false),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Align QR code within frame',
+                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Success message
+            if (_lastScanMessage != null)
+              Positioned(
+                top: 16,
+                left: 16,
+                right: 16,
+                child: _buildScanOverlay(),
+              ),
+            // Flash button
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                ),
+                child: Builder(
+                  builder: (context) {
+                    final controller = _controller;
+                    final isEnabled = controller != null && !_hasCameraError;
+                    return IconButton(
+                      icon: const Icon(Icons.flash_on, color: Colors.white),
+                      onPressed: isEnabled ? () => controller.toggleTorch() : null,
+                      iconSize: 28,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCorner(double? top, double? bottom, bool isLeft, bool isTop) {
+    return Positioned(
+      top: top,
+      bottom: bottom,
+      left: isLeft ? 0 : null,
+      right: isLeft ? null : 0,
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          border: Border(
+            top: isTop ? BorderSide(color: Colors.blue.shade400, width: 4) : BorderSide.none,
+            bottom: !isTop ? BorderSide(color: Colors.blue.shade400, width: 4) : BorderSide.none,
+            left: isLeft ? BorderSide(color: Colors.blue.shade400, width: 4) : BorderSide.none,
+            right: !isLeft ? BorderSide(color: Colors.blue.shade400, width: 4) : BorderSide.none,
+          ),
+          borderRadius: BorderRadius.only(
+            topLeft: isLeft && isTop ? const Radius.circular(8) : Radius.zero,
+            topRight: !isLeft && isTop ? const Radius.circular(8) : Radius.zero,
+            bottomLeft: isLeft && !isTop ? const Radius.circular(8) : Radius.zero,
+            bottomRight: !isLeft && !isTop ? const Radius.circular(8) : Radius.zero,
           ),
         ),
-      ],
+      ),
     );
   }
 
