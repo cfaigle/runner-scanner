@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
+import 'providers/app_state.dart';
 import 'services/services.dart';
 import 'models/models.dart';
 import 'core/theme/app_theme.dart';
@@ -30,9 +32,16 @@ void main() async {
   await databaseService.init();
   debugPrint('🚀 APP: DatabaseService initialized');
 
+  // Initialize AppState
+  debugPrint('🚀 APP: Initializing AppState...');
+  final appState = AppState();
+  await appState.init();
+  debugPrint('🚀 APP: AppState initialized');
+
   runApp(
-    MultiRepositoryProvider(
+    MultiProvider(
       providers: [
+        Provider.value(value: appState),
         RepositoryProvider.value(value: databaseService),
       ],
       child: MultiBlocProvider(
