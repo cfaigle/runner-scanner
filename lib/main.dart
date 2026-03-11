@@ -11,10 +11,11 @@ import 'screens/home_screen_new.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
+  debugPrint('🚀 APP: Initializing Hive...');
   await Hive.initFlutter();
 
   // Register adapters
+  debugPrint('🚀 APP: Registering Hive adapters...');
   Hive.registerAdapter(RunnerAdapter());
   Hive.registerAdapter(ScanAdapter());
   Hive.registerAdapter(SyncOperationAdapter());
@@ -23,8 +24,10 @@ void main() async {
   Hive.registerAdapter(LocalEntryAdapter());
 
   // Initialize database
+  debugPrint('🚀 APP: Initializing DatabaseService...');
   final databaseService = DatabaseService();
   await databaseService.init();
+  debugPrint('🚀 APP: DatabaseService initialized');
 
   runApp(
     MultiRepositoryProvider(
@@ -34,9 +37,15 @@ void main() async {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (context) => RaceBloc(
-              context.read<DatabaseService>(),
-            )..add(LoadRaces()),
+            create: (context) {
+              debugPrint('🚀 APP: Creating RaceBloc...');
+              final bloc = RaceBloc(
+                context.read<DatabaseService>(),
+              );
+              debugPrint('🚀 APP: RaceBloc created, sending LoadRaces event...');
+              bloc.add(LoadRaces());
+              return bloc;
+            },
           ),
         ],
         child: const RunnerScanApp(),

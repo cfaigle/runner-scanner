@@ -132,14 +132,17 @@ class DatabaseService {
   // Local race operations
   List<LocalRace> getLocalRaces() {
     final races = _localRacesBox.values.cast<LocalRace>().toList();
-    debugPrint('💾 DB: getLocalRaces() returned ${races.length} races');
+    debugPrint('💾 DB: getLocalRaces() - Hive box has ${_localRacesBox.length} items, returning ${races.length} races');
+    for (var race in races) {
+      debugPrint('   - ${race.id}: ${race.name} (${race.status})');
+    }
     return races;
   }
 
   Future<void> saveLocalRace(LocalRace race) async {
     debugPrint('💾 DB: saveLocalRace(${race.name}) - id: ${race.id}');
     await _localRacesBox.put(race.id, race);
-    debugPrint('💾 DB: ✅ Saved race to Hive');
+    debugPrint('💾 DB: ✅ Saved to Hive. Box now has ${_localRacesBox.length} items');
   }
 
   LocalRace? getLocalRace(String id) {

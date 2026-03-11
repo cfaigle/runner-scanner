@@ -30,16 +30,28 @@ class HomeScreenNew extends StatelessWidget {
       ),
       body: BlocBuilder<RaceBloc, RaceState>(
         builder: (context, state) {
+          debugPrint('🏠 HOME: Build with state: ${state.runtimeType}');
+          
           if (state is RaceLoading) {
+            debugPrint('🏠 HOME: Showing loading indicator');
             return const Center(child: CircularProgressIndicator());
           } else if (state is RaceLoaded) {
+            debugPrint('🏠 HOME: RaceLoaded with ${state.races.length} races');
+            for (var race in state.races) {
+              debugPrint('   - ${race.id}: ${race.name} (${race.status})');
+            }
+            
             if (state.races.isEmpty) {
+              debugPrint('🏠 HOME: No races, showing empty state');
               return _buildEmptyState(context);
             }
+            debugPrint('🏠 HOME: Showing race list');
             return _buildRaceList(state.races, context);
           } else if (state is RaceError) {
+            debugPrint('🏠 HOME: Showing error: ${state.error}');
             return Center(child: Text('Error: ${state.error}'));
           }
+          debugPrint('🏠 HOME: Unknown state, showing empty state');
           return _buildEmptyState(context);
         },
       ),

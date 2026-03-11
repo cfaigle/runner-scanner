@@ -24,20 +24,31 @@ class RaceBloc extends Bloc<RaceEvent, RaceState> {
   }
 
   Future<void> _onLoadRaces(LoadRaces event, Emitter<RaceState> emit) async {
+    debugPrint('🔄 RACE BLOC: LoadRaces event received');
     emit(RaceLoading());
     
     try {
       List<LocalRace> localRaces = [];
       
       // Load from local storage first (cached)
+      debugPrint('💾 RACE BLOC: Loading from Hive...');
       localRaces = _databaseService.getLocalRaces();
+      debugPrint('💾 RACE BLOC: Loaded ${localRaces.length} races from Hive');
+      for (var race in localRaces) {
+        debugPrint('   - ${race.id}: ${race.name} (${race.status})');
+      }
       
       // If connected to server, also sync
       if (_apiClient != null) {
+        debugPrint('🌐 RACE BLOC: Connected to server, syncing...');
         try {
+          debugPrint('🌐 RACE BLOC: Fetching races from server...');
           final serverRaces = await _apiClient!.getRaces();
+          debugPrint('🌐 RACE BLOC: Received ${serverRaces.length} races from server');
+          
           // Merge or update local races with server data
           for (final race in serverRaces) {
+            debugPrint('   📥 Saving server race: ${race.name}');
             await _databaseService.saveLocalRace(LocalRace(
               id: race.id,
               name: race.name,
@@ -49,11 +60,16 @@ class RaceBloc extends Bloc<RaceEvent, RaceState> {
               scanCount: race.scanCount,
             ));
           }
+          
           // Reload from local
+          debugPrint('💾 RACE BLOC: Reloading from Hive after sync...');
           localRaces = _databaseService.getLocalRaces();
+          debugPrint('💾 RACE BLOC: Now have ${localRaces.length} races in Hive');
         } catch (e) {
-          debugPrint('Failed to sync with server: $e');
+          debugPrint('❌ RACE BLOC: Failed to sync with server: $e');
         }
+      } else {
+        debugPrint('⚠️ RACE BLOC: Not connected to server, using cached data only');
       }
       
       final raceEntities = localRaces.map((r) => RaceEntity(
@@ -68,8 +84,10 @@ class RaceBloc extends Bloc<RaceEvent, RaceState> {
         scanCount: r.scanCount,
       )).toList();
       
+      debugPrint('📤 RACE BLOC: Emitting RaceLoaded with ${raceEntities.length} races');
       emit(RaceLoaded(races: raceEntities));
     } catch (e) {
+      debugPrint('❌ RACE BLOC: Error loading races: $e');
       emit(RaceError('Failed to load races: $e'));
     }
   }
