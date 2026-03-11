@@ -1,11 +1,12 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 part 'local_race.g.dart';
 
 @HiveType(typeId: 4)
 class LocalRace extends HiveObject {
   @HiveField(0)
-  String id;
+  String id;  // Stable GUID - never changes
 
   @HiveField(1)
   String name;
@@ -37,6 +38,15 @@ class LocalRace extends HiveObject {
   @HiveField(10)
   DateTime updatedAt;
 
+  @HiveField(11)
+  String? serverId;  // Server's ID for this race (if synced)
+
+  @HiveField(12)
+  String dataHash;  // Hash of data for change detection
+
+  @HiveField(13)
+  bool isSynced;  // Has been synced to server
+
   LocalRace({
     required this.id,
     required this.name,
@@ -47,10 +57,32 @@ class LocalRace extends HiveObject {
     this.endTime,
     this.entryCount = 0,
     this.scanCount = 0,
+    this.serverId,
+    String? dataHash,
+    this.isSynced = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+        updatedAt = updatedAt ?? DateTime.now(),
+        dataHash = dataHash ?? _generateHash(name, description, raceDate);
+
+  static String _generateHash(String? name, String? description, DateTime raceDate) {
+    final data = '$name|$description|$raceDate';
+    return data.hashCode.toString();
+  }
+
+  String computeHash() {
+    return _generateHash(name, description, raceDate);
+  }
+
+  bool get hasChanges {
+    return computeHash() != dataHash;
+  }
+
+  void markSynced() {
+    isSynced = true;
+    dataHash = computeHash();
+  }
 
   bool get isDraft => status == 'draft';
   bool get isActive => status == 'active';

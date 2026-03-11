@@ -26,6 +26,9 @@ class LocalRaceAdapter extends TypeAdapter<LocalRace> {
       endTime: fields[6] as DateTime?,
       entryCount: fields[7] as int,
       scanCount: fields[8] as int,
+      serverId: fields[11] as String?,
+      dataHash: fields[12] as String?,
+      isSynced: fields[13] as bool,
       createdAt: fields[9] as DateTime?,
       updatedAt: fields[10] as DateTime?,
     );
@@ -34,7 +37,7 @@ class LocalRaceAdapter extends TypeAdapter<LocalRace> {
   @override
   void write(BinaryWriter writer, LocalRace obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,7 +59,13 @@ class LocalRaceAdapter extends TypeAdapter<LocalRace> {
       ..writeByte(9)
       ..write(obj.createdAt)
       ..writeByte(10)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(11)
+      ..write(obj.serverId)
+      ..writeByte(12)
+      ..write(obj.dataHash)
+      ..writeByte(13)
+      ..write(obj.isSynced);
   }
 
   @override

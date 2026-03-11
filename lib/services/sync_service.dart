@@ -55,28 +55,43 @@ class SyncService {
     debugPrint('📤 Uploading local data to server...');
 
     try {
-      // Upload local races that don't exist on server
+      // Upload local races that have changes and aren't synced
       final localRaces = _databaseService.getLocalRaces();
-      debugPrint('📤 Found ${localRaces.length} local races to potentially upload');
+      debugPrint('📤 Found ${localRaces.length} local races to check');
       
       for (final race in localRaces) {
-        // Skip if race ID looks like a server UUID (already exists on server)
-        if (race.id.length > 20 && race.id.contains('-')) {
-          continue; // This is a server race, skip
+        debugPrint('📤 Checking race: ${race.id} - ${race.name} (serverId: ${race.serverId}, isSynced: ${race.isSynced}, hasChanges: ${race.hasChanges})');
+        
+        // Skip if already synced and no changes
+        if (race.isSynced && !race.hasChanges) {
+          debugPrint('   ⏭️ Skipping - already synced, no changes');
+          continue;
         }
         
         try {
-          debugPrint('📤 Uploading local race: ${race.name}');
-          // Create race on server
-          await _apiClient.createRace(
-            name: race.name,
-            description: race.description,
-            raceDate: race.raceDate,
-          );
+          if (race.serverId != null) {
+            // Race exists on server - update it
+            debugPrint('   📤 Updating server race: ${race.name} (server ID: ${race.serverId})');
+            // TODO: Call update endpoint when available
+            // For now, skip updates
+          } else {
+            // New race - create on server
+            debugPrint('   📤 Creating new race on server: ${race.name}');
+            final serverRace = await _apiClient.createRace(
+              name: race.name,
+              description: race.description,
+              raceDate: race.raceDate,
+            );
+            // Update local race with server ID
+            race.serverId = serverRace.id;
+            race.markSynced();
+            await race.save();
+            debugPrint('   ✅ Created on server with ID: ${serverRace.id}');
+          }
           uploaded++;
         } catch (e) {
-          debugPrint('❌ Failed to upload race ${race.name}: $e');
-          errors.add('Failed to upload race ${race.name}: $e');
+          debugPrint('   ❌ Failed to sync race ${race.name}: $e');
+          errors.add('Failed to sync race ${race.name}: $e');
         }
       }
 
