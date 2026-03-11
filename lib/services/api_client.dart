@@ -8,6 +8,7 @@ import '../models/models.dart';
 class ApiClient {
   String baseUrl;
   String? _authToken;
+  String? _currentUserId;
   WebSocketChannel? _webSocket;
   Timer? _syncTimer;
 
@@ -23,8 +24,13 @@ class ApiClient {
   void setAuthToken(String token) {
     _authToken = token;
   }
-  
+
   String? get authToken => _authToken;
+  String? get currentUserId => _currentUserId;
+
+  void setCurrentUserId(String? userId) {
+    _currentUserId = userId;
+  }
   
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',

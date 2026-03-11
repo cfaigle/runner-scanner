@@ -41,7 +41,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        Provider.value(value: appState),
+        ChangeNotifierProvider.value(value: appState),
         RepositoryProvider.value(value: databaseService),
       ],
       child: MultiBlocProvider(

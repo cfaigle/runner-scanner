@@ -291,6 +291,7 @@ class AppState extends ChangeNotifier {
     
     _authToken = data['access_token'];
     _currentUserId = data['user']['id'];
+    _apiClient!.setCurrentUserId(_currentUserId);
 
     // Trigger immediate sync to download races to local storage
     if (_syncService != null) {

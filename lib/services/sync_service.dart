@@ -49,25 +49,65 @@ class SyncService {
   }
 
   Future<SyncResult> _uploadPendingItems() async {
-    final pendingItems = _databaseService.getPendingSyncItems();
     int uploaded = 0;
     final errors = <String>[];
 
-    debugPrint('📤 Uploading ${pendingItems.length} pending items...');
+    debugPrint('📤 Uploading local data to server...');
 
-    for (final item in pendingItems) {
-      try {
-        await _processSyncItem(item);
-        await _databaseService.markSynced(item.id);
-        uploaded++;
-      } catch (e) {
-        debugPrint('Failed to sync item ${item.id}: $e');
-        errors.add('Failed to sync ${item.operation}: $e');
+    try {
+      // Upload local races that don't exist on server
+      final localRaces = _databaseService.getLocalRaces();
+      debugPrint('📤 Found ${localRaces.length} local races to potentially upload');
+      
+      for (final race in localRaces) {
+        // Skip if race ID looks like a server UUID (already exists on server)
+        if (race.id.length > 20 && race.id.contains('-')) {
+          continue; // This is a server race, skip
+        }
+        
+        try {
+          debugPrint('📤 Uploading local race: ${race.name}');
+          // Create race on server
+          await _apiClient.createRace(
+            name: race.name,
+            description: race.description,
+            raceDate: race.raceDate,
+          );
+          uploaded++;
+        } catch (e) {
+          debugPrint('❌ Failed to upload race ${race.name}: $e');
+          errors.add('Failed to upload race ${race.name}: $e');
+        }
       }
+
+      // Upload local entries
+      final localEntries = _databaseService.getLocalEntries();
+      debugPrint('📤 Found ${localEntries.length} local entries to potentially upload');
+      
+      for (final entry in localEntries) {
+        try {
+          debugPrint('📤 Uploading entry: ${entry.runnerName} for race ${entry.raceId}');
+          await _apiClient.createEntry(
+            raceId: entry.raceId,
+            userId: _apiClient.currentUserId ?? '',
+            runnerName: entry.runnerName,
+            sex: entry.sex,
+            dateOfBirth: entry.dateOfBirth,
+            bibNumber: entry.bibNumber,
+          );
+          uploaded++;
+        } catch (e) {
+          debugPrint('❌ Failed to upload entry ${entry.runnerName}: $e');
+          errors.add('Failed to upload entry ${entry.runnerName}: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Upload error: $e');
+      errors.add('Upload error: $e');
     }
 
     return SyncResult(
-      success: true,
+      success: errors.isEmpty,
       uploaded: uploaded,
       downloaded: 0,
       errors: errors,
