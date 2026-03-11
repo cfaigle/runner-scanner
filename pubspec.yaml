@@ -54,7 +54,18 @@ dependencies:
   # Permission handling for camera
   permission_handler: ^11.3.1
   
-  # State management
+  # State management - BLoC
+  flutter_bloc: ^9.1.0
+  equatable: ^2.0.7
+  
+  # Functional programming for errors
+  dartz: ^0.10.1
+  
+  # Dependency injection
+  get_it: ^8.0.3
+  injectable: ^2.5.0
+  
+  # State management (replacing Provider)
   provider: ^6.1.2
   
   # UUID generation
@@ -87,6 +98,9 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
+  
+  # Dependency injection code generation
+  injectable_generator: ^2.6.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
